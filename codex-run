@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+# codex-run — headless Codex CLI dispatch, built for orchestration from Claude Code.
+#
+# Unlike agy, Codex CLI's `exec` subcommand is natively headless: it supports -C for
+# workdir binding, --sandbox for write scoping, and prints cleanly to stdout on a
+# non-TTY. No pseudo-TTY wrapper or quota-fallback shim is needed. This script only adds:
+#   1. a discipline preamble (real command output, terse replies) prepended to every prompt
+#   2. a hard wall-clock timeout
+#   3. a sane default model/sandbox so callers don't have to repeat them
+#
+# usage: codex-run [-C workdir] [-m model] [-s sandbox] [-t timeout_seconds] "<prompt>"
+
+set -uo pipefail
+
+MODEL="gpt-5.5"
+WORKDIR="$PWD"
+SANDBOX="workspace-write"
+TIMEOUT=300
+
+while getopts "C:m:s:t:" opt; do
+  case "$opt" in
+    C) WORKDIR="$OPTARG" ;;
+    m) MODEL="$OPTARG" ;;
+    s) SANDBOX="$OPTARG" ;;
+    t) TIMEOUT="$OPTARG" ;;
+    *) echo "usage: codex-run [-C workdir] [-m model] [-s sandbox] [-t seconds] \"<prompt>\"" >&2; exit 2 ;;
+  esac
+done
+shift $((OPTIND - 1))
+
+PROMPT="${1:-}"
+if [ -z "$PROMPT" ]; then
+  echo "codex-run: missing prompt" >&2
+  exit 2
+fi
+
+PREAMBLE="You are a headless worker invoked non-interactively. Work ONLY inside ${WORKDIR}. Rules:
+- When you run a shell command, paste its REAL output verbatim. NEVER invent or guess output.
+- Be terse: return the result, not narration.
+
+Task: ${PROMPT}"
+
+timeout "$TIMEOUT" codex exec -C "$WORKDIR" -m "$MODEL" --sandbox "$SANDBOX" "$PREAMBLE"

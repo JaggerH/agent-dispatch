@@ -1,6 +1,6 @@
 ---
 name: agy-run
-description: Use when delegating text-heavy or mechanical work (bulk search/read/summarize across many files, consistency sweeps, boilerplate edits, doc audits) to a cheap Gemini worker via the local `agy-run` command, instead of doing it with the expensive main model — or when the user says "让 agy 做" / "用 agy" / "dispatch to gemini". Covers dispatch syntax, background runs, the DENIED escalation protocol, and result verification.
+description: Use once agent-routing (or the user, saying "让 agy 做" / "用 agy" / "dispatch to gemini") has decided a task goes to the Gemini worker. Covers dispatch syntax, background runs, the DENIED escalation protocol, and result verification for the local `agy-run` command. Does NOT cover whether to delegate — see agent-routing for that.
 ---
 
 # agy-run — dispatch work to a cheap Gemini subagent
@@ -9,14 +9,8 @@ description: Use when delegating text-heavy or mechanical work (bulk search/read
 local command, already on PATH. It fixes agy's non-TTY stdout bug, binds the working directory,
 enforces output discipline, and auto-falls-back to Claude Sonnet 4.6 on usage limits.
 
-## When to delegate (and when not)
-
-Delegate: bulk file reading/searching/summarizing, terminology-consistency sweeps, mechanical
-multi-file edits, generating boilerplate, first-pass doc audits — anything where volume is high
-and per-step judgment is low.
-
-Do NOT delegate: architectural decisions, subtle refactors, anything whose result you cannot
-cheaply verify, tasks touching credentials.
+For whether a given task belongs here vs. Claude Code itself vs. codex-run, see the
+`agent-routing` skill — this skill only covers mechanics once that call is made.
 
 ## Dispatch
 
